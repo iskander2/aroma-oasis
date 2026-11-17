@@ -1,0 +1,101 @@
+
+{% extends "shop/base.html" %}
+
+{% block content %}
+
+<style>
+.product-detail {
+    width: 100%;
+    max-width: 750px;
+    margin: 20px auto;
+    padding: 15px;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.product-detail .detail-image {
+    display: block;
+    width: 220px !important;
+    height: 260px !important;
+    max-width: 90%;
+    object-fit: contain;
+    margin: 15px auto;
+}
+</style>
+
+<div class="product-detail">
+
+    <h1>{{ product.name }}</h1>
+
+    {% if product.image %}
+        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="detail-image">
+    {% endif %}
+
+    {% if product.description %}
+        <p>{{ product.description }}</p>
+    {% endif %}
+
+    <div class="fragrance-info">
+        {% if product.top_notes %}
+            <p><strong>Верхние ноты:</strong> {{ product.top_notes }}</p>
+        {% endif %}
+        {% if product.heart_notes %}
+            <p><strong>Ноты сердца:</strong> {{ product.heart_notes }}</p>
+        {% endif %}
+        {% if product.base_notes %}
+            <p><strong>Базовые ноты:</strong> {{ product.base_notes }}</p>
+        {% endif %}
+        {% if product.longevity %}
+            <p><strong>Стойкость:</strong> {{ product.longevity }}</p>
+        {% endif %}
+        {% if product.sillage %}
+            <p><strong>Шлейф:</strong> {{ product.sillage }}</p>
+        {% endif %}
+    </div>
+
+    <label for="volume-select">Выберите объём:</label>
+
+    <select id="volume-select">
+        {% for variant in variants %}
+            <option
+                value="{{ variant.id }}"
+                data-price="{{ variant.price }}"
+                data-stock="{{ variant.available_quantity }}"
+                data-url="{% url 'add_to_cart' variant.id %}"
+                {% if variant.id == product.id %}selected{% endif %}
+                {% if variant.available_quantity <= 0 %}disabled{% endif %}
+            >
+                {{ variant.volume_ml }} мл
+            </option>
+        {% endfor %}
+    </select>
+
+    <p>Цена: <strong id="product-price">{{ product.price }}</strong> сом</p>
+    <p>В наличии: <span id="product-stock">{{ product.available_quantity }}</span></p>
+
+    <form method="post" action="{% url 'add_to_cart' product.id %}"
+          class="add-cart-form" id="detail-cart-form">
+        {% csrf_token %}
+        <button type="submit">В КОРЗИНУ</button>
+    </form>
+
+    <p><a href="{% url 'home' %}">← Вернуться к ароматам</a></p>
+
+</div>
+
+<script>
+const volumeSelect = document.getElementById("volume-select");
+const priceElement = document.getElementById("product-price");
+const stockElement = document.getElementById("product-stock");
+const cartForm = document.getElementById("detail-cart-form");
+
+volumeSelect.addEventListener("change", function () {
+    const option = this.options[this.selectedIndex];
+
+    priceElement.textContent = option.dataset.price;
+    stockElement.textContent = option.dataset.stock;
+    cartForm.action = option.dataset.url;
+});
+</script>
+
+{% endblock %}

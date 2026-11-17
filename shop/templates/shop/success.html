@@ -1,0 +1,31 @@
+{% extends "shop/base.html" %}
+
+{% block title %}Заказ оформлен — AROMA OASIS{% endblock %}
+
+{% block content %}
+
+<section class="catalog">
+
+    <div class="page-container" style="text-align: center;">
+
+        <div class="infinity">∞</div>
+
+        <h1 class="page-title">ЗАКАЗ УСПЕШНО ОФОРМЛЕН!</h1>
+
+        <p class="gold-text" style="font-size: 20px; margin-bottom: 20px;">
+            Спасибо за покупку!
+        </p>
+
+        <p style="color: #c9bfae; margin-bottom: 30px;">
+            AROMA OASIS — НЕЖНОСТЬ В КАЖДОЙ КАПЛЕ
+        </p>
+
+        <a href="{% url 'home' %}">
+            <button type="button">ВЕРНУТЬСЯ В МАГАЗИН</button>
+        </a>
+
+    </div>
+
+</section>
+
+{% endblock %}

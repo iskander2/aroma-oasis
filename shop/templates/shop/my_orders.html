@@ -1,0 +1,52 @@
+
+{% extends "shop/base.html" %}
+
+{% block title %}Мои заказы — AROMA OASIS{% endblock %}
+
+{% block content %}
+
+<section class="catalog">
+
+    <div class="page-container">
+
+        <h1 class="page-title">МОИ ЗАКАЗЫ</h1>
+
+        {% for order in orders %}
+
+            <div class="product">
+
+                <h3>Заказ №{{ order.id }}</h3>
+
+                <p class="gold-text">
+                    Дата: {{ order.created_at|date:"d.m.Y H:i" }}
+                </p>
+
+                <p class="price">
+                    Сумма: {{ order.total_price }} сом
+                </p>
+
+                <p class="stock">
+                    Статус: {{ order.get_status_display }}
+                </p>
+
+                <a href="{% url 'order_detail' order.id %}">
+                    Подробнее о заказе
+                </a>
+
+            </div>
+
+        {% empty %}
+
+            <p class="empty">У вас пока нет заказов.</p>
+
+        {% endfor %}
+
+        <br>
+
+        <a href="{% url 'home' %}">← Вернуться в магазин</a>
+
+    </div>
+
+</section>
+
+{% endblock %}

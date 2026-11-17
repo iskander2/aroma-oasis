@@ -1,0 +1,274 @@
+{% extends "shop/base.html" %}
+
+{% block title %}AROMA OASIS — Парфюмерия{% endblock %}
+
+{% block content %}
+
+<section class="hero">
+    <div class="infinity">∞</div>
+    <h1>AROMA OASIS</h1>
+    <p>НЕЖНОСТЬ В КАЖДОЙ КАПЛЕ</p>
+</section>
+
+<section class="catalog">
+
+    <h2>НАША КОЛЛЕКЦИЯ</h2>
+
+    <form id="search-form"
+          style="max-width: 500px; margin: 0 auto 20px; display: flex; gap: 10px;">
+
+        <input
+            type="text"
+            id="search-input"
+            name="search"
+            placeholder="Найти аромат..."
+            value="{{ search_query }}"
+            style="margin: 0;"
+        >
+
+        <button type="submit">НАЙТИ</button>
+    </form>
+
+    <p id="search-message" class="empty"></p>
+
+    <div class="category-filters">
+
+        <button type="button" class="category-filter active" data-category="all">
+            ВСЕ АРОМАТЫ
+        </button>
+
+        <button type="button" class="category-filter" data-category="men">
+            МУЖСКИЕ
+        </button>
+
+        <button type="button" class="category-filter" data-category="women">
+            ЖЕНСКИЕ
+        </button>
+
+        <button type="button" class="category-filter" data-category="unisex">
+            УНИСЕКС
+        </button>
+
+    </div>
+
+    <style>
+        .category-filters {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 25px auto 35px;
+        }
+
+        .category-filters button {
+            display: inline-block;
+            width: auto;
+            min-width: 120px;
+            padding: 12px 20px;
+            border: 1px solid #c5a45b;
+            border-radius: 25px;
+            background: transparent;
+            color: #c5a45b;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .category-filters button.active,
+        .category-filters button:hover {
+            background: #c5a45b;
+            color: #111;
+        }
+    </style>
+
+    <div class="products">
+
+        {% regroup products by name as aroma_groups %}
+
+        {% for aroma in aroma_groups %}
+            {% with first_product=aroma.list.0 %}
+
+            <div class="product" data-category="{{ first_product.category }}">
+
+                <a href="{% url 'product_detail' first_product.id %}" class="product-link">
+    <h3>{{ first_product.name }}</h3>
+
+    {% if first_product.image %}
+        <img src="{{ first_product.image.url }}" alt="{{ first_product.name }}">
+    {% endif %}
+</a>
+
+                <p>Выберите объём:</p>
+
+                <select class="volume-select">
+                    {% for variant in aroma.list %}
+                        <option
+                            value="{{ variant.id }}"
+                            data-price="{{ variant.price }}"
+                            data-stock="{{ variant.available_quantity }}"
+                            data-url="{% url 'add_to_cart' variant.id %}"
+                            {% if variant.available_quantity <= 0 %}disabled{% endif %}
+                        >
+                            {{ variant.volume_ml }} мл
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <p class="price">
+                    Цена: <span class="selected-price"></span> сом
+                </p>
+
+                <p class="stock">
+                    В наличии: <span class="selected-stock"></span> шт.
+                </p>
+
+                <form
+                    action="{% url 'add_to_cart' first_product.id %}"
+                    method="POST"
+                    class="add-cart-form"
+                >
+                    {% csrf_token %}
+                    <button type="submit">В КОРЗИНУ</button>
+                </form>
+
+            </div>
+
+            {% endwith %}
+        {% empty %}
+            <p class="empty">Пока нет товаров в каталоге.</p>
+        {% endfor %}
+
+    </div>
+</section>
+
+<script>
+document.querySelectorAll(".product").forEach(function(card) {
+    const select = card.querySelector(".volume-select");
+    const price = card.querySelector(".selected-price");
+    const stock = card.querySelector(".selected-stock");
+    const form = card.querySelector(".add-cart-form");
+    const button = form.querySelector("button");
+
+    function updateVariant() {
+        const option = select.options[select.selectedIndex];
+
+        if (!option) return;
+
+        price.textContent = option.dataset.price;
+        stock.textContent = option.dataset.stock;
+        form.action = option.dataset.url;
+        button.disabled = option.disabled;
+    }
+
+    const firstAvailable = Array.from(select.options).find(
+        option => !option.disabled
+    );
+
+    if (firstAvailable) {
+        select.value = firstAvailable.value;
+    }
+
+    updateVariant();
+    select.addEventListener("change", updateVariant);
+
+    form.addEventListener("submit", async function(event) {
+        event.preventDefault();
+
+        button.disabled = true;
+
+        try {
+            const response = await fetch(form.action, {
+                method: "POST",
+                body: new FormData(form),
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            });
+
+            if (!response.ok) {
+                alert("Не удалось добавить товар. Попробуйте ещё раз.");
+                return;
+            }
+
+            const result = await response.json();
+
+            if (result.success) {
+                button.textContent = "ДОБАВЛЕНО ✓";
+
+                setTimeout(function() {
+                    button.textContent = "В КОРЗИНУ";
+                }, 1200);
+            } else {
+                alert(result.message);
+            }
+
+        } catch (error) {
+            alert("Ошибка соединения с сервером.");
+        } finally {
+            button.disabled = select.options[select.selectedIndex].disabled;
+        }
+    });
+});
+
+const searchForm = document.getElementById("search-form");
+const searchInput = document.getElementById("search-input");
+const searchMessage = document.getElementById("search-message");
+const categoryButtons = document.querySelectorAll(".category-filter");
+
+let selectedCategory = "all";
+
+function applyFilters() {
+    const query = searchInput.value.trim().toLowerCase();
+    const cards = document.querySelectorAll(".product");
+
+    let found = 0;
+
+    cards.forEach(function(card) {
+        const name = card.querySelector("h3").textContent.toLowerCase();
+        const category = card.dataset.category;
+
+        const matchesName = name.includes(query);
+        const matchesCategory =
+            selectedCategory === "all" ||
+            category === selectedCategory;
+
+        if (matchesName && matchesCategory) {
+            card.style.display = "";
+            found++;
+        } else {
+            card.style.display = "none";
+        }
+    });
+
+    if (found === 0) {
+        searchMessage.textContent = "Ничего не найдено.";
+    } else {
+        searchMessage.textContent = "Найдено ароматов: " + found;
+    }
+}
+
+searchForm.addEventListener("submit", function(event) {
+    event.preventDefault();
+    applyFilters();
+});
+
+searchInput.addEventListener("input", applyFilters);
+
+categoryButtons.forEach(function(button) {
+    button.addEventListener("click", function() {
+        selectedCategory = button.dataset.category;
+
+        categoryButtons.forEach(function(item) {
+            item.classList.remove("active");
+        });
+
+        button.classList.add("active");
+
+        applyFilters();
+    });
+});
+
+applyFilters();
+</script>
+
+{% endblock %}

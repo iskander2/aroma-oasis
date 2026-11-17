@@ -1,0 +1,58 @@
+{% extends "shop/base.html" %}
+
+{% block title %}Заказ №{{ order.id }} — AROMA OASIS{% endblock %}
+
+{% block content %}
+
+<div class="page-container">
+
+    <h1 class="page-title">
+        ЗАКАЗ №{{ order.id }}
+    </h1>
+
+    <h2 class="gold-text">ДАННЫЕ ПОКУПАТЕЛЯ</h2>
+
+    <p>Имя: {{ order.customer_name }}</p>
+    <p>Телефон: {{ order.phone }}</p>
+    <p>Адрес: {{ order.address }}</p>
+
+    <hr>
+
+    <h2 class="gold-text">ВАШИ ТОВАРЫ</h2>
+
+    {% for item in order.items.all %}
+
+        <div class="product">
+
+            <h3>{{ item.product_name }}</h3>
+
+            <p>Объём: {{ item.volume_ml }} мл</p>
+
+            <p>Цена: {{ item.price }} сом</p>
+
+            <p>Количество: {{ item.quantity }}</p>
+
+            <p>
+                Сумма:
+                {{ item.price|floatformat:2 }} × {{ item.quantity }}
+            </p>
+
+        </div>
+
+    {% endfor %}
+
+    <h2 class="page-title">
+        ИТОГО: {{ order.total_price }} сом
+    </h2>
+
+    <p class="gold-text">
+        Статус: {{ order.get_status_display }}
+    </p>
+
+    <br>
+
+    <a href="{% url 'home' %}">← Вернуться в магазин</a>
+
+</div>
+
+{% endblock %}

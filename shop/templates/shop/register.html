@@ -1,0 +1,41 @@
+
+{% extends "shop/base.html" %}
+
+{% block title %}Регистрация — AROMA OASIS{% endblock %}
+
+{% block content %}
+
+<section class="catalog">
+
+    <div class="page-container">
+
+        <h1 class="page-title">РЕГИСТРАЦИЯ</h1>
+
+        <form method="POST">
+            {% csrf_token %}
+
+            {{ form.as_p }}
+
+            <button type="submit">ЗАРЕГИСТРИРОВАТЬСЯ</button>
+        </form>
+
+        <br>
+
+        <p style="text-align: center;">
+            Уже есть аккаунт?
+            <a href="{% url 'login' %}" class="gold-text">
+                Войти
+            </a>
+        </p>
+
+        <br>
+
+        <p style="text-align: center;">
+            <a href="{% url 'home' %}">← Вернуться в магазин</a>
+        </p>
+
+    </div>
+
+</section>
+
+{% endblock %}

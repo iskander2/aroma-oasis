@@ -1,0 +1,40 @@
+{% extends "shop/base.html" %}
+
+{% block title %}Вход — AROMA OASIS{% endblock %}
+
+{% block content %}
+
+<section class="catalog">
+
+    <div class="page-container">
+
+        <h1 class="page-title">ВХОД В АККАУНТ</h1>
+
+        <form method="POST">
+            {% csrf_token %}
+
+            {{ form.as_p }}
+
+            <button type="submit">ВОЙТИ</button>
+        </form>
+
+        <br>
+
+        <p style="text-align: center;">
+            Нет аккаунта?
+            <a href="{% url 'register' %}" class="gold-text">
+                Зарегистрироваться
+            </a>
+        </p>
+
+        <br>
+
+        <p style="text-align: center;">
+            <a href="{% url 'home' %}">← Вернуться в магазин</a>
+        </p>
+
+    </div>
+
+</section>
+
+{% endblock %}
