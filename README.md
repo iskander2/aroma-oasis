@@ -42,7 +42,15 @@ AROMA OASIS — учебный веб-проект интернет-магази
 
 \- Панель администратора Django
 
-
+- REST API на Django REST Framework
+- Получение списка товаров и просмотр товара через API
+- Создание заказов через API
+- Просмотр своих заказов
+- Отмена заказов с возвратом товара на склад
+- Управление статусами заказов
+- Авторизация через Token Authentication
+- Разграничение прав доступа пользователей и администратора
+- Автоматические API-тесты
 
 \## Технологии
 
@@ -61,18 +69,57 @@ AROMA OASIS — учебный веб-проект интернет-магази
 \- JavaScript
 
 \- AJAX
+- Django REST Framework
+- REST API
+- Token Authentication
 
 
+## Установка и запуск
 
-\## Установка и запуск
+1. Клонируйте репозиторий:
 
+```bash
+git clone https://github.com/iskander2/aroma-oasis.git
+```
 
+2. Перейдите в папку проекта:
 
-1\. Клонируйте репозиторий:
+```bash
+cd aroma-oasis
+```
 
+3. Создайте виртуальное окружение:
 
+```bash
+python -m venv .venv
+```
 
-&#x20;  ```bash
+4. Активируйте виртуальное окружение (Windows):
 
-&#x20;  git clone YOUR\_REPOSITORY\_URL
+```powershell
+.venv\Scripts\Activate.ps1
+```
 
+5. Установите зависимости:
+
+```bash
+pip install -r requirements.txt
+```
+
+6. Выполните миграции:
+
+```bash
+python manage.py migrate
+```
+
+7. Запустите сервер:
+
+```bash
+python manage.py runserver
+```
+
+8. Откройте в браузере:
+
+```text
+http://127.0.0.1:8000/
+```

@@ -12,6 +12,11 @@ from django.contrib.auth.forms import UserChangeForm
 from .forms import ProfileForm
 from django.db import transaction
 from django.http import JsonResponse
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
+from .serializers import ProductSerializer,OrderSerializer, OrderCreateSerializer
+from .permissions import IsAdminOrReadOnly
+from rest_framework.permissions import IsAuthenticated,IsAdminUser
 
 
 def home(request):
@@ -287,6 +292,7 @@ def my_orders(request):
         'orders': orders
     })
 
+
 @login_required
 def profile(request):
     if request.method == 'POST':
@@ -310,3 +316,172 @@ def profile(request):
         'total_spent': total_spent,
         'form': form
     })
+
+@api_view(['GET','POST'])
+@permission_classes([IsAdminOrReadOnly])
+def product_list(request):
+    if request.method == 'GET':
+        products = Product.objects.all()
+        serializer = ProductSerializer(products, many=True)
+        return Response(serializer.data)
+    elif request.method == 'POST':
+        serializer = ProductSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=201)
+        return Response(serializer.errors, status=400)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def my_orders_api(request):
+    orders = Order.objects.filter(user=request.user).order_by('-created_at')
+
+    serializer = OrderSerializer(orders, many=True)
+
+    return Response(serializer.data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def my_order_detail_api(request, order_id):
+    order = get_object_or_404(
+        Order,
+        id=order_id,
+        user=request.user
+    )
+
+    serializer = OrderSerializer(order)
+
+    return Response(serializer.data)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_order_api(request):
+    serializer = OrderCreateSerializer(data=request.data)
+
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=400)
+
+    data = serializer.validated_data
+
+    total = 0
+
+    for item in data['items']:
+        product = Product.objects.get(id=item['product_id'])
+        total += product.price * item['quantity']
+
+    with transaction.atomic():
+        order = Order.objects.create(
+            user=request.user,
+            customer_name=data['customer_name'],
+            phone=data['phone'],
+            address=data['address'],
+            total_price=total
+        )
+
+        for item in data['items']:
+            product = Product.objects.get(id=item['product_id'])
+
+            OrderItem.objects.create(
+                order=order,
+                product=product,
+                product_name=product.name,
+                price=product.price,
+                volume_ml=product.volume_ml,
+                quantity=item['quantity']
+            )
+
+            product.quantity -= item['quantity']
+            product.save()
+
+    return Response(
+        OrderSerializer(order).data,
+        status=201
+    )
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def cancel_order_api(request, order_id):
+    order = get_object_or_404(
+        Order,
+        id=order_id,
+        user=request.user
+    )
+
+    if order.status != 'new':
+        return Response(
+            {'error': 'Этот заказ нельзя отменить.'},
+            status=400
+        )
+
+    with transaction.atomic():
+
+        for item in order.items.all():
+
+            if item.product:
+                item.product.quantity += item.quantity
+                item.product.save()
+
+        order.status = 'cancelled'
+        order.save()
+
+    serializer = OrderSerializer(order)
+
+    return Response(serializer.data)
+@api_view(['PATCH'])
+@permission_classes([IsAdminUser])
+def update_order_status_api(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+
+    new_status = request.data.get('status')
+
+    allowed_transitions = {
+        'new': 'confirmed',
+        'confirmed': 'paid',
+        'paid': 'shipped',
+        'shipped': 'completed',
+    }
+
+    expected_status = allowed_transitions.get(order.status)
+
+    if new_status != expected_status:
+        return Response(
+            {'error': 'Недопустимый переход статуса заказа.'},
+            status=400
+        )
+
+    order.status = new_status
+    order.save()
+
+    serializer = OrderSerializer(order)
+
+    return Response(serializer.data)
+
+@api_view(['GET','PATCH','DELETE'])
+@permission_classes([IsAdminOrReadOnly])
+def api_product_detail(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    if request.method == 'DELETE':
+        product.delete()
+        return Response(status=204)
+    if request.method == 'PATCH':
+        serializer = ProductSerializer(
+            product,
+            data=request.data,
+            partial=True
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+
+        return Response(serializer.errors, status=400)
+    serializer = ProductSerializer(product)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def all_orders_api(request):
+    orders = Order.objects.all().order_by('-created_at')
+
+    serializer = OrderSerializer(orders, many=True)
+
+    return Response(serializer.data)

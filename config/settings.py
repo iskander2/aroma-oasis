@@ -41,7 +41,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'shop'
+    'shop',
+    'rest_framework',
+    'rest_framework.authtoken',
 ]
 
 MIDDLEWARE = [
@@ -137,3 +139,11 @@ LOGOUT_REDIRECT_URL = '/'
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+}
